@@ -1,0 +1,3 @@
+# The script uses only the Python standard library (urllib for GraphQL).
+# Pinning nothing keeps CI installs fast; this file exists so the workflow's
+# `pip install -r requirements.txt` step is a no-op today but easy to extend.

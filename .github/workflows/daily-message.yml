@@ -1,0 +1,49 @@
+name: Daily message
+
+on:
+  schedule:
+    # 06:00 UTC every day. Adjust to whatever time you like.
+    - cron: "0 6 * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: daily-message
+  cancel-in-progress: false
+
+jobs:
+  paint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout source branch
+        uses: actions/checkout@v4
+        with:
+          # Full history so we can create/delete the message branch cleanly.
+          fetch-depth: 0
+          # Use the PAT so pushes to the `message` branch (which is the
+          # default branch) succeed even if branch protections would block
+          # the built-in GITHUB_TOKEN.
+          token: ${{ secrets.MESSAGE_PAT }}
+          # Always check out the source branch that holds the script,
+          # regardless of which branch happens to be default. Change this if
+          # you keep the script somewhere other than `source`.
+          ref: source
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Paint contribution message
+        env:
+          MESSAGE_PAT: ${{ secrets.MESSAGE_PAT }}
+          GITHUB_TOKEN: ${{ secrets.MESSAGE_PAT }}
+          GIT_AUTHOR_NAME: ${{ secrets.COMMIT_NAME }}
+          GIT_AUTHOR_EMAIL: ${{ secrets.COMMIT_EMAIL }}
+          MESSAGE: "Hello!"
+          BRANCH: "message"
+        run: python src/write_message.py
