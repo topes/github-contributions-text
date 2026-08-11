@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Paint a message on the GitHub contribution graph.
 
-Recreates a dedicated branch (default: `message`) from scratch as an orphan
-branch, then creates backdated empty commits on each date that corresponds
-to a painted pixel in the message. The number of commits per painted day is
+Recreates a dedicated branch (default: `message`) from `master`, then creates
+backdated empty commits on each date that corresponds to a painted pixel in
+the message. The number of commits per painted day is
 `max(1, 2 * max_daily_contributions_last_year)` so the message always shows
 at the maximum green intensity.
 
@@ -64,7 +64,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument(
         "--script-branch",
         default=os.environ.get("SCRIPT_BRANCH", "master"),
-        help="Branch to make default before deleting --branch (default: master).",
+        help="Branch to base `message` on, and to use as default while recreating (default: master).",
     )
     p.add_argument("--remote", default=os.environ.get("REMOTE", "origin"))
     p.add_argument(
@@ -81,16 +81,28 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return p.parse_args(argv)
 
 
-def recreate_orphan_branch(branch: str, author_name: str, author_email: str) -> None:
-    """Switch to a fresh orphan branch with an empty index."""
+def recreate_branch_from_script(
+    branch: str,
+    script_branch: str,
+    remote: str,
+    author_name: str,
+    author_email: str,
+) -> None:
+    """Delete local `branch` and recreate it from `script_branch` (e.g. master)."""
     _run(["git", "config", "user.name", author_name])
     _run(["git", "config", "user.email", author_email])
 
-    # Drop any existing local copy of the branch so --orphan can recreate it.
+    # Ensure we have the latest script branch tip to branch from.
+    _run(["git", "fetch", remote, script_branch])
+    _run(["git", "checkout", script_branch])
+    # Align with remote tip when available (no-op failure is fine locally).
+    subprocess.run(
+        ["git", "reset", "--hard", f"{remote}/{script_branch}"],
+        check=False,
+    )
+
     subprocess.run(["git", "branch", "-D", branch], check=False)
-    _run(["git", "checkout", "--orphan", branch])
-    # Unstage everything the previous branch had staged; leave working tree alone.
-    subprocess.run(["git", "rm", "-rf", "--cached", "."], check=False)
+    _run(["git", "checkout", "-B", branch, script_branch])
 
 
 def make_pixel_commits(dates: list[date], commits_per_day: int, env: dict) -> None:
@@ -174,7 +186,13 @@ def main(argv: list[str] | None = None) -> int:
     # Cannot delete the default branch — move default to master first.
     set_default_branch(token, repo_slug, args.script_branch)
 
-    recreate_orphan_branch(args.branch, author_name, author_email)
+    recreate_branch_from_script(
+        args.branch,
+        args.script_branch,
+        args.remote,
+        author_name,
+        author_email,
+    )
 
     env = os.environ.copy()
     env["GIT_AUTHOR_NAME"] = author_name

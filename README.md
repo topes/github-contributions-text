@@ -22,8 +22,9 @@ Default message: `Hello!`
    commits so the cell always shows at the maximum green intensity (and
    stays at max even as your real activity grows).
 6. Each run switches the repo default branch to `master`, deletes and
-   recreates `message` as an orphan branch, force-pushes it, then switches
-   the default branch back to `message`.
+   recreates `message` by branching from `master`, adds the painted
+   commits on top, force-pushes it, then switches the default branch back
+   to `message`.
 
 ## One-time setup
 
