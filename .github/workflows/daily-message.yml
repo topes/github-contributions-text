@@ -25,10 +25,9 @@ jobs:
           # default branch) succeed even if branch protections would block
           # the built-in GITHUB_TOKEN.
           token: ${{ secrets.MESSAGE_PAT }}
-          # Always check out the source branch that holds the script,
-          # regardless of which branch happens to be default. Change this if
-          # you keep the script somewhere other than `source`.
-          ref: source
+          # Check out the branch that holds the script (not the painted
+          # `message` branch, which becomes the default branch).
+          ref: master
 
       - name: Set up Python
         uses: actions/setup-python@v5

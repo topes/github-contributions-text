@@ -26,12 +26,11 @@ Default message: `Hello!`
 ## One-time setup
 
 1. Push this repository to GitHub as a **public** repo. Keep the script on
-   a branch called `source` (or edit `.github/workflows/daily-message.yml`
-   to point at whatever branch holds the code).
+   `master` (the workflow checks out `ref: master`).
 2. Set the repository's **default branch to `message`**.
    Settings → Branches → Default branch → Switch. GitHub only counts commits
    toward your contribution graph if they land on the default branch (or
-   `gh-pages`).
+   `gh-pages`). Do this after the first successful run creates `message`.
 3. Create a Personal Access Token that can (a) read your contribution
    calendar via GraphQL and (b) force-push to this repo:
    - Classic PAT with the `repo` scope, **or**
