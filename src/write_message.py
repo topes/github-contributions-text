@@ -7,13 +7,19 @@ to a painted pixel in the message. The number of commits per painted day is
 `max(1, 2 * max_daily_contributions_last_year)` so the message always shows
 at the maximum green intensity.
 
+Before deleting `message`, the repo default branch is switched to `master`
+(so GitHub allows the delete). After the branch is recreated and pushed, the
+default is switched back to `message`.
+
 Environment variables:
   MESSAGE_PAT / GH_TOKEN / GITHUB_TOKEN  GitHub token for GraphQL + push
   GIT_AUTHOR_NAME                        Commit author name
   GIT_AUTHOR_EMAIL                       Commit author email (GitHub-verified)
   MESSAGE                                Text to paint (default: "Hello!")
   BRANCH                                 Branch to (re)create (default: "message")
+  SCRIPT_BRANCH                          Safe default while recreating (default: "master")
   REMOTE                                 Git remote to push to (default: "origin")
+  GITHUB_REPOSITORY                      Optional owner/repo override
 """
 
 from __future__ import annotations
@@ -27,7 +33,11 @@ from datetime import date
 # Allow running as `python src/write_message.py` from repo root.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from github_stats import fetch_max_daily_contributions
+from github_stats import (
+    fetch_max_daily_contributions,
+    resolve_repo_slug,
+    set_default_branch,
+)
 from layout import compute_pixel_dates, preview_grid
 
 
@@ -37,13 +47,6 @@ def _run(cmd: list[str], *, env: dict | None = None, check: bool = True, capture
     if capture and result.stdout:
         print(result.stdout.rstrip())
     return result
-
-
-def _require_env(name: str) -> str:
-    value = os.environ.get(name)
-    if not value:
-        raise SystemExit(f"Required environment variable {name} is not set")
-    return value
 
 
 def _get_token() -> str:
@@ -58,6 +61,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--message", default=os.environ.get("MESSAGE", "Hello!"))
     p.add_argument("--branch", default=os.environ.get("BRANCH", "message"))
+    p.add_argument(
+        "--script-branch",
+        default=os.environ.get("SCRIPT_BRANCH", "master"),
+        help="Branch to make default before deleting --branch (default: master).",
+    )
     p.add_argument("--remote", default=os.environ.get("REMOTE", "origin"))
     p.add_argument(
         "--dry-run",
@@ -109,9 +117,8 @@ def make_pixel_commits(dates: list[date], commits_per_day: int, env: dict) -> No
             )
 
 
-def force_push(remote: str, branch: str) -> None:
-    # Try to delete the remote branch first so we always start from a clean slate.
-    # Failing here is fine (branch may not exist yet).
+def delete_and_force_push(remote: str, branch: str) -> None:
+    # Default branch must already be something else (e.g. master).
     subprocess.run(["git", "push", remote, "--delete", branch], check=False)
     _run(["git", "push", remote, branch, "--force"])
 
@@ -131,13 +138,14 @@ def main(argv: list[str] | None = None) -> int:
     dates = compute_pixel_dates(args.message, today)
     print(f"Message: {args.message!r}")
     print(f"Pixel-dates: {len(dates)} (window ends {today.isoformat()})")
-    print("Preview (X = will paint, ? = future cell skipped):")
+    print("Preview (X = will paint, ? = future cell skipped; Sun/Sat margins empty):")
     print(preview_grid(args.message, today))
     print()
 
     if args.force_max is not None:
         max_day = args.force_max
         print(f"Using forced max_daily_contributions = {max_day}")
+        token = None
     else:
         token = _get_token()
         max_day = fetch_max_daily_contributions(token)
@@ -158,6 +166,14 @@ def main(argv: list[str] | None = None) -> int:
         print("No painted dates; nothing to do.")
         return 0
 
+    if token is None:
+        token = _get_token()
+
+    repo_slug = resolve_repo_slug(os.environ.get("GITHUB_REPOSITORY"))
+
+    # Cannot delete the default branch — move default to master first.
+    set_default_branch(token, repo_slug, args.script_branch)
+
     recreate_orphan_branch(args.branch, author_name, author_email)
 
     env = os.environ.copy()
@@ -167,14 +183,14 @@ def main(argv: list[str] | None = None) -> int:
     env["GIT_COMMITTER_EMAIL"] = author_email
 
     make_pixel_commits(dates, commits_per_day, env)
-    force_push(args.remote, args.branch)
+    delete_and_force_push(args.remote, args.branch)
+
+    # Point contributions back at the painted branch.
+    set_default_branch(token, repo_slug, args.branch)
 
     print()
     print(f"Done. Painted {len(dates)} days x {commits_per_day} commits on '{args.branch}'.")
-    print(
-        "Reminder: GitHub only counts commits toward your contribution graph if "
-        f"'{args.branch}' is the repository's DEFAULT branch (or gh-pages)."
-    )
+    print(f"Default branch restored to '{args.branch}'.")
     return 0
 
 

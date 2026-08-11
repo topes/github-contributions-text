@@ -2,17 +2,17 @@
 rolling GitHub contribution year.
 
 GitHub's contribution graph is laid out as columns of weeks (Sunday at the
-top row, Saturday at the bottom). The visible window is roughly the last
-53 columns ending on the week containing today.
+top row, Saturday at the bottom). Glyphs are 5 rows tall and sit with a
+1-row empty margin on Sunday and Saturday (Monday–Friday).
 """
 
 from __future__ import annotations
 
 from datetime import date, timedelta
 
-from font import GLYPH_HEIGHT, message_width, render_message
+from font import GLYPH_HEIGHT, VERTICAL_MARGIN, message_width, render_message
 
-CALENDAR_ROWS = GLYPH_HEIGHT  # 7 days per week
+CALENDAR_ROWS = 7  # Sun → Sat
 CALENDAR_COLUMNS = 53  # ~52 full past weeks plus the current partial week
 
 
@@ -53,12 +53,13 @@ def compute_pixel_dates(message: str, today: date) -> list[date]:
     start_sunday, _ = calendar_window(today)
 
     dates: set[date] = set()
-    for row_idx, row in enumerate(rows):
+    for glyph_row, row in enumerate(rows):
+        calendar_row = VERTICAL_MARGIN + glyph_row
         for glyph_col, cell in enumerate(row):
             if cell != "X":
                 continue
             col = left_pad + glyph_col
-            day = start_sunday + timedelta(days=col * 7 + row_idx)
+            day = start_sunday + timedelta(days=col * 7 + calendar_row)
             if day > today:
                 continue
             dates.add(day)
@@ -66,7 +67,7 @@ def compute_pixel_dates(message: str, today: date) -> list[date]:
 
 
 def preview_grid(message: str, today: date) -> str:
-    """Return a printable grid (7 rows) showing the painted cells inside the
+    """Return a printable 7-row grid showing painted cells inside the
     calendar window. Useful for `--dry-run` output.
     """
     rows = render_message(message)
@@ -75,12 +76,13 @@ def preview_grid(message: str, today: date) -> str:
     grid = [["." for _ in range(CALENDAR_COLUMNS)] for _ in range(CALENDAR_ROWS)]
 
     start_sunday, _ = calendar_window(today)
-    for row_idx, row in enumerate(rows):
+    for glyph_row, row in enumerate(rows):
+        calendar_row = VERTICAL_MARGIN + glyph_row
         for glyph_col, cell in enumerate(row):
             if cell != "X":
                 continue
             col = left_pad + glyph_col
-            day = start_sunday + timedelta(days=col * 7 + row_idx)
+            day = start_sunday + timedelta(days=col * 7 + calendar_row)
             marker = "X" if day <= today else "?"
-            grid[row_idx][col] = marker
+            grid[calendar_row][col] = marker
     return "\n".join("".join(row) for row in grid)

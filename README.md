@@ -9,9 +9,10 @@ Default message: `Hello!`
 
 ## How it works
 
-1. A 7-row bitmap font renders the message into a `7 x N` grid (rows are
-   Sunday → Saturday, columns are weeks). Most glyphs are 3 columns wide;
-   `W` and `M` are 5 columns wide, with 1 empty column between glyphs.
+1. A 5-row bitmap font renders the message; it is placed with a 1-row
+   empty margin on Sunday and Saturday inside GitHub's 7-row week
+   (Monday–Friday). Most glyphs are 3 columns wide; `W` and `M` are 5
+   columns wide, with 1 empty column between glyphs.
 2. The message is centered horizontally inside the current 53-column
    rolling year window.
 3. Every painted pixel is mapped to a concrete calendar date.
@@ -20,21 +21,24 @@ Default message: `Hello!`
 5. For each painted date it makes `max(1, 2 * max_day)` backdated empty
    commits so the cell always shows at the maximum green intensity (and
    stays at max even as your real activity grows).
-6. The `message` branch is deleted and recreated as an orphan branch every
-   run, then force-pushed.
+6. Each run switches the repo default branch to `master`, deletes and
+   recreates `message` as an orphan branch, force-pushes it, then switches
+   the default branch back to `message`.
 
 ## One-time setup
 
 1. Push this repository to GitHub as a **public** repo. Keep the script on
    `master` (the workflow checks out `ref: master`).
-2. Set the repository's **default branch to `message`**.
-   Settings → Branches → Default branch → Switch. GitHub only counts commits
-   toward your contribution graph if they land on the default branch (or
-   `gh-pages`). Do this after the first successful run creates `message`.
+2. Keep `master` as the branch that holds this script. After the first
+   successful workflow run, the script will set the **default branch to
+   `message`** automatically (and flip it back to `master` each run before
+   deleting `message`). GitHub only counts commits toward your contribution
+   graph if they land on the default branch (or `gh-pages`).
 3. Create a Personal Access Token that can (a) read your contribution
-   calendar via GraphQL and (b) force-push to this repo:
+   calendar via GraphQL, (b) force-push, and (c) change the default branch:
    - Classic PAT with the `repo` scope, **or**
-   - Fine-grained PAT scoped to this repo with `contents: read/write` and
+   - Fine-grained PAT scoped to this repo with `contents: read/write`,
+     `administration: read/write` (needed to change the default branch), and
      account permission `read:user`.
    Save it as the repo secret `MESSAGE_PAT`.
 4. Add two more repo secrets used as commit author info:
@@ -80,18 +84,17 @@ inside the 53-column year window; long messages will need to be shortened.
 
 | Path | Purpose |
 |------|---------|
-| `src/font.py` | 7-row bitmap font (3-wide, or 5-wide for `M`/`W`). |
-| `src/layout.py` | Renders a message and maps painted pixels to dates. |
-| `src/github_stats.py` | GraphQL query for max daily contributions. |
-| `src/write_message.py` | CLI: recreates the branch, backdates commits, force-pushes. |
+| `src/font.py` | 5-row bitmap font (3-wide, or 5-wide for `M`/`W`). |
+| `src/layout.py` | Renders a message (+ Sun/Sat margins) and maps pixels to dates. |
+| `src/github_stats.py` | GraphQL max-daily fetch + default-branch switching. |
+| `src/write_message.py` | CLI: flips default → recreates branch → flips default back. |
 | `.github/workflows/daily-message.yml` | Daily cron + `workflow_dispatch`. |
 | `requirements.txt` | Python dependencies (stdlib only today). |
 
 ## Caveats
 
-- Force-pushing the default branch every day means the repo's history
-  effectively resets daily. Don't use this on a repo that also hosts real
-  code.
+- The painted `message` branch history is rebuilt from scratch every day.
+  Don't put real code on that branch; keep the script on `master`.
 - GitHub sometimes takes several minutes to recompute the contribution
   graph after a push.
 - If the daily cron misses a day (e.g. Actions outage), the message will

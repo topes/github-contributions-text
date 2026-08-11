@@ -1,16 +1,21 @@
-"""7-row bitmap font for the GitHub contributions grid.
+"""5-row bitmap font for the GitHub contributions grid.
 
-Each glyph is a list of 7 strings (top row = Sunday, bottom row = Saturday).
+Glyphs are 5 rows tall and are placed with a 1-row empty margin above and
+below inside GitHub's 7-row week (Sunday → Saturday), so they occupy
+Monday–Friday.
+
 `X` = painted pixel, `.` = empty pixel.
 
-Most glyphs are 3 columns wide. `W` and `M` are 5 columns wide, matching the
-plan's spec. Lookups are case-insensitive: lowercase input falls back to
-uppercase.
+Most glyphs are 3 columns wide. `W` and `M` are 5 columns wide.
+Lookups are case-insensitive: lowercase input falls back to uppercase.
 """
 
 from __future__ import annotations
 
-GLYPH_HEIGHT = 7
+GLYPH_HEIGHT = 5
+
+# Empty rows above/below the glyph inside the 7-day calendar column.
+VERTICAL_MARGIN = 1
 
 # Inter-character spacing (empty columns between glyphs).
 LETTER_SPACING = 1
@@ -23,31 +28,23 @@ _RAW_GLYPHS: dict[str, list[str]] = {
         "...",
         "...",
         "...",
-        "...",
-        "...",
     ],
     "A": [
         ".X.",
         "X.X",
-        "X.X",
         "XXX",
-        "X.X",
         "X.X",
         "X.X",
     ],
     "B": [
         "XX.",
         "X.X",
-        "X.X",
         "XX.",
-        "X.X",
         "X.X",
         "XX.",
     ],
     "C": [
         ".XX",
-        "X..",
-        "X..",
         "X..",
         "X..",
         "X..",
@@ -58,33 +55,25 @@ _RAW_GLYPHS: dict[str, list[str]] = {
         "X.X",
         "X.X",
         "X.X",
-        "X.X",
-        "X.X",
         "XX.",
     ],
     "E": [
         "XXX",
         "X..",
-        "X..",
         "XX.",
-        "X..",
         "X..",
         "XXX",
     ],
     "F": [
         "XXX",
         "X..",
-        "X..",
         "XX.",
-        "X..",
         "X..",
         "X..",
     ],
     "G": [
         ".XX",
         "X..",
-        "X..",
-        "X.X",
         "X.X",
         "X.X",
         ".XX",
@@ -92,16 +81,12 @@ _RAW_GLYPHS: dict[str, list[str]] = {
     "H": [
         "X.X",
         "X.X",
-        "X.X",
         "XXX",
-        "X.X",
         "X.X",
         "X.X",
     ],
     "I": [
         "XXX",
-        ".X.",
-        ".X.",
         ".X.",
         ".X.",
         ".X.",
@@ -111,23 +96,17 @@ _RAW_GLYPHS: dict[str, list[str]] = {
         "XXX",
         "..X",
         "..X",
-        "..X",
-        "..X",
         "X.X",
         ".X.",
     ],
     "K": [
         "X.X",
-        "X.X",
         "XX.",
         "X..",
         "XX.",
-        "X.X",
         "X.X",
     ],
     "L": [
-        "X..",
-        "X..",
         "X..",
         "X..",
         "X..",
@@ -138,8 +117,6 @@ _RAW_GLYPHS: dict[str, list[str]] = {
         "X...X",
         "XX.XX",
         "X.X.X",
-        "X.X.X",
-        "X...X",
         "X...X",
         "X...X",
     ],
@@ -149,13 +126,9 @@ _RAW_GLYPHS: dict[str, list[str]] = {
         "XXX",
         "X.X",
         "X.X",
-        "X.X",
-        "X.X",
     ],
     "O": [
         ".X.",
-        "X.X",
-        "X.X",
         "X.X",
         "X.X",
         "X.X",
@@ -164,16 +137,12 @@ _RAW_GLYPHS: dict[str, list[str]] = {
     "P": [
         "XX.",
         "X.X",
-        "X.X",
         "XX.",
-        "X..",
         "X..",
         "X..",
     ],
     "Q": [
         ".X.",
-        "X.X",
-        "X.X",
         "X.X",
         "X.X",
         "XXX",
@@ -182,8 +151,6 @@ _RAW_GLYPHS: dict[str, list[str]] = {
     "R": [
         "XX.",
         "X.X",
-        "X.X",
-        "XX.",
         "XX.",
         "X.X",
         "X.X",
@@ -191,16 +158,12 @@ _RAW_GLYPHS: dict[str, list[str]] = {
     "S": [
         ".XX",
         "X..",
-        "X..",
         ".X.",
-        "..X",
         "..X",
         "XX.",
     ],
     "T": [
         "XXX",
-        ".X.",
-        ".X.",
         ".X.",
         ".X.",
         ".X.",
@@ -211,13 +174,9 @@ _RAW_GLYPHS: dict[str, list[str]] = {
         "X.X",
         "X.X",
         "X.X",
-        "X.X",
-        "X.X",
         ".X.",
     ],
     "V": [
-        "X.X",
-        "X.X",
         "X.X",
         "X.X",
         "X.X",
@@ -227,8 +186,6 @@ _RAW_GLYPHS: dict[str, list[str]] = {
     "W": [
         "X...X",
         "X...X",
-        "X...X",
-        "X.X.X",
         "X.X.X",
         "XX.XX",
         "X...X",
@@ -236,17 +193,13 @@ _RAW_GLYPHS: dict[str, list[str]] = {
     "X": [
         "X.X",
         "X.X",
-        "X.X",
         ".X.",
-        "X.X",
         "X.X",
         "X.X",
     ],
     "Y": [
         "X.X",
         "X.X",
-        "X.X",
-        ".X.",
         ".X.",
         ".X.",
         ".X.",
@@ -254,16 +207,12 @@ _RAW_GLYPHS: dict[str, list[str]] = {
     "Z": [
         "XXX",
         "..X",
-        "..X",
         ".X.",
-        "X..",
         "X..",
         "XXX",
     ],
     "0": [
         ".X.",
-        "X.X",
-        "X.X",
         "X.X",
         "X.X",
         "X.X",
@@ -274,85 +223,65 @@ _RAW_GLYPHS: dict[str, list[str]] = {
         "XX.",
         ".X.",
         ".X.",
-        ".X.",
-        ".X.",
         "XXX",
     ],
     "2": [
         "XX.",
         "..X",
-        "..X",
         ".X.",
-        "X..",
         "X..",
         "XXX",
     ],
     "3": [
         "XX.",
         "..X",
-        "..X",
         ".X.",
-        "..X",
         "..X",
         "XX.",
     ],
     "4": [
         "X.X",
         "X.X",
-        "X.X",
         "XXX",
-        "..X",
         "..X",
         "..X",
     ],
     "5": [
         "XXX",
         "X..",
-        "X..",
         "XX.",
-        "..X",
         "..X",
         "XX.",
     ],
     "6": [
         ".XX",
         "X..",
-        "X..",
         "XX.",
-        "X.X",
         "X.X",
         ".X.",
     ],
     "7": [
         "XXX",
         "..X",
-        "..X",
         ".X.",
         ".X.",
-        "X..",
         "X..",
     ],
     "8": [
         ".X.",
         "X.X",
-        "X.X",
         ".X.",
-        "X.X",
         "X.X",
         ".X.",
     ],
     "9": [
         ".X.",
         "X.X",
-        "X.X",
         ".XX",
-        "..X",
         "..X",
         "XX.",
     ],
     "!": [
-        ".X.",
-        ".X.",
         ".X.",
         ".X.",
         ".X.",
@@ -362,15 +291,11 @@ _RAW_GLYPHS: dict[str, list[str]] = {
     "?": [
         "XX.",
         "..X",
-        "..X",
-        ".X.",
         ".X.",
         "...",
         ".X.",
     ],
     ".": [
-        "...",
-        "...",
         "...",
         "...",
         "...",
@@ -381,27 +306,21 @@ _RAW_GLYPHS: dict[str, list[str]] = {
         "...",
         "...",
         "...",
-        "...",
-        "...",
         ".X.",
         "X..",
     ],
     "-": [
         "...",
         "...",
-        "...",
         "XXX",
-        "...",
         "...",
         "...",
     ],
     ":": [
         "...",
-        "...",
         ".X.",
         "...",
         ".X.",
-        "...",
         "...",
     ],
 }
@@ -439,10 +358,10 @@ def glyph_width(char: str) -> int:
 
 
 def render_message(message: str) -> list[str]:
-    """Render `message` as a list of 7 rows of `X`/`.` characters.
+    """Render `message` as a list of GLYPH_HEIGHT rows of `X`/`.` characters.
 
     Glyphs are joined left-to-right with `LETTER_SPACING` empty columns between
-    them. Leading/trailing padding is handled by the caller.
+    them. Vertical calendar margins are applied by the layout module.
     """
     if not message:
         return ["" for _ in range(GLYPH_HEIGHT)]

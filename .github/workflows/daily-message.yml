@@ -45,4 +45,5 @@ jobs:
           GIT_AUTHOR_EMAIL: ${{ secrets.COMMIT_EMAIL }}
           MESSAGE: "Hello!"
           BRANCH: "message"
+          SCRIPT_BRANCH: "master"
         run: python src/write_message.py
