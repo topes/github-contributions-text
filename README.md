@@ -1,11 +1,11 @@
 # contributions-text
 
 Paints a text message on your GitHub contribution graph by generating a large
-number of backdated commits on a dedicated branch. A daily GitHub Actions
+number of backdated commits on a dedicated branch. A weekly GitHub Actions
 workflow wipes and recreates that branch so the message tracks the rolling
-year window and always shows at the darkest green intensity.
+year window at high green intensity (capped at 50 commits per square).
 
-Default message: `Hello!`
+Default message: `HELLO WORLD!`
 
 ## How it works
 
@@ -18,9 +18,9 @@ Default message: `Hello!`
 3. Every painted pixel is mapped to a concrete calendar date.
 4. The script queries your GraphQL contribution calendar and finds
    `max_day` = highest daily contribution count in the last year.
-5. For each painted date it makes `max(1, 2 * max_day)` backdated empty
-   commits so the cell always shows at the maximum green intensity (and
-   stays at max even as your real activity grows).
+5. For each painted date it makes `min(50, max(1, 2 * max_day))` backdated
+   empty commits so the cell shows at high green intensity (capped at 50
+   commits per square).
 6. Each run switches the repo default branch to `master`, deletes and
    recreates `message` by branching from `master`, adds the painted
    commits on top, force-pushes it, then switches the default branch back
@@ -47,8 +47,8 @@ Default message: `Hello!`
    - `COMMIT_EMAIL` – **must** be an email verified on your GitHub account,
      otherwise the commits won't be attributed to you and won't count.
 5. (Optional) Trigger the workflow manually once via
-   Actions → *Daily message* → *Run workflow* to paint immediately instead
-   of waiting for the 06:00 UTC cron.
+   Actions → *Weekly message* → *Run workflow* to paint immediately instead
+   of waiting for the Sunday 06:00 UTC cron.
 
 ## Running locally
 
@@ -89,7 +89,7 @@ inside the 53-column year window; long messages will need to be shortened.
 | `src/layout.py` | Renders a message (+ Sun/Sat margins) and maps pixels to dates. |
 | `src/github_stats.py` | GraphQL max-daily fetch + default-branch switching. |
 | `src/write_message.py` | CLI: flips default → recreates branch → flips default back. |
-| `.github/workflows/daily-message.yml` | Daily cron + `workflow_dispatch`. |
+| `.github/workflows/daily-message.yml` | Weekly Sunday cron + `workflow_dispatch`. |
 | `requirements.txt` | Python dependencies (stdlib only today). |
 
 ## Caveats
@@ -98,6 +98,6 @@ inside the 53-column year window; long messages will need to be shortened.
   Don't put real code on that branch; keep the script on `master`.
 - GitHub sometimes takes several minutes to recompute the contribution
   graph after a push.
-- If the daily cron misses a day (e.g. Actions outage), the message will
+- If the weekly cron misses a run (e.g. Actions outage), the message will
   still be correct on the next successful run because the branch is
   rebuilt from scratch each time.

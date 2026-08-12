@@ -15,7 +15,7 @@ Environment variables:
   MESSAGE_PAT / GH_TOKEN / GITHUB_TOKEN  GitHub token for GraphQL + push
   GIT_AUTHOR_NAME                        Commit author name
   GIT_AUTHOR_EMAIL                       Commit author email (GitHub-verified)
-  MESSAGE                                Text to paint (default: "Hello!")
+  MESSAGE                                Text to paint (default: "HELLO WORLD!")
   BRANCH                                 Branch to (re)create (default: "message")
   SCRIPT_BRANCH                          Safe default while recreating (default: "master")
   REMOTE                                 Git remote to push to (default: "origin")
@@ -59,7 +59,7 @@ def _get_token() -> str:
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--message", default=os.environ.get("MESSAGE", "Hello!"))
+    p.add_argument("--message", default=os.environ.get("MESSAGE", "HELLO WORLD!"))
     p.add_argument("--branch", default=os.environ.get("BRANCH", "message"))
     p.add_argument(
         "--script-branch",
@@ -163,7 +163,8 @@ def main(argv: list[str] | None = None) -> int:
         max_day = fetch_max_daily_contributions(token)
         print(f"GraphQL: max_daily_contributions = {max_day}")
 
-    commits_per_day = max(1, max_day * 2)
+    # Double the current max intensity, but never more than 50 commits per square.
+    commits_per_day = min(50, max(1, max_day * 2))
     total_commits = commits_per_day * len(dates)
     print(f"commits_per_painted_day = {commits_per_day}  (total commits = {total_commits})")
 

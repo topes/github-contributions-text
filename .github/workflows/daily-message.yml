@@ -1,13 +1,13 @@
-name: Daily message
+name: Weekly message
 
 on:
   schedule:
-    # 06:00 UTC every day. Adjust to whatever time you like.
-    - cron: "0 6 * * *"
+    # 06:00 UTC every Sunday.
+    - cron: "0 6 * * 0"
   workflow_dispatch: {}
 
 concurrency:
-  group: daily-message
+  group: weekly-message
   cancel-in-progress: false
 
 jobs:
@@ -43,7 +43,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.MESSAGE_PAT }}
           GIT_AUTHOR_NAME: ${{ secrets.COMMIT_NAME }}
           GIT_AUTHOR_EMAIL: ${{ secrets.COMMIT_EMAIL }}
-          MESSAGE: "Hello!"
+          MESSAGE: "HELLO WORLD!"
           BRANCH: "message"
           SCRIPT_BRANCH: "master"
         run: python src/write_message.py
